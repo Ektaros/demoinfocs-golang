@@ -294,7 +294,6 @@ func (e *Entity) Get(name string) interface{} {
 	fp := newFieldPath()
 	if !e.class.getFieldPathForName(fp, name) {
 		e.fpNoop[name] = true
-		fp.release()
 		return nil
 	}
 	e.fpCache[name] = fp
@@ -427,8 +426,6 @@ func (e *Entity) readFields(r *reader) {
 				S2:        true,
 			})
 		}
-
-		fp.release()
 	}
 }
 

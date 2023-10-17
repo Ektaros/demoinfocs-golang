@@ -3,7 +3,6 @@ package sendtables2
 import (
 	"strconv"
 	"strings"
-	"sync"
 )
 
 var huffTree = newHuffmanTree()
@@ -258,10 +257,12 @@ func (fp *fieldPath) pop(n int) {
 
 // copy returns a copy of the fieldPath
 func (fp *fieldPath) copy() *fieldPath {
-	x := fpPool.Get().(*fieldPath)
+	x := &fieldPath{
+		path: make([]int, 7),
+		last: fp.last,
+		done: fp.done,
+	}
 	copy(x.path, fp.path)
-	x.last = fp.last
-	x.done = fp.done
 	return x
 }
 
@@ -276,33 +277,11 @@ func (fp *fieldPath) String() string {
 
 // newFieldPath returns a new fieldPath ready for use
 func newFieldPath() *fieldPath {
-	fp := fpPool.Get().(*fieldPath)
-	fp.reset()
-	return fp
-}
-
-var fpPool = &sync.Pool{
-	New: func() interface{} {
-		return &fieldPath{
-			path: make([]int, 7),
-			last: 0,
-			done: false,
-		}
-	},
-}
-
-var fpReset = []int{-1, 0, 0, 0, 0, 0, 0}
-
-// reset resets the fieldPath to the empty value
-func (fp *fieldPath) reset() {
-	copy(fp.path, fpReset)
-	fp.last = 0
-	fp.done = false
-}
-
-// release returns the fieldPath to the pool for re-use
-func (fp *fieldPath) release() {
-	fpPool.Put(fp)
+	return &fieldPath{
+		path: []int{-1, 0, 0, 0, 0, 0, 0},
+		last: 0,
+		done: false,
+	}
 }
 
 // readFieldPaths reads a new slice of fieldPath values from the given reader
@@ -332,8 +311,6 @@ func readFieldPaths(r *reader) []*fieldPath {
 			node = next
 		}
 	}
-
-	fp.release()
 
 	return paths
 }
